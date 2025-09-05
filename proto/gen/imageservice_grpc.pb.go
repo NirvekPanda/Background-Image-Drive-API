@@ -4,7 +4,7 @@
 // - protoc             v3.20.3
 // source: imageservice.proto
 
-package proto
+package gen
 
 import (
 	context "context"

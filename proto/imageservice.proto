@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package imageservice;
 
-option go_package = "https://github.com/NirvekPanda/Background-Image-Drive-API/proto";
+option go_package = "github.com/NirvekPanda/Background-Image-Drive-API/proto/gen";
 
 import "google/protobuf/timestamp.proto";
 

@@ -4,7 +4,7 @@
 // 	protoc        v3.20.3
 // source: imageservice.proto
 
-package proto
+package gen
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -984,7 +984,7 @@ const file_imageservice_proto_rawDesc = "" +
 	"\vDeleteImage\x12 .imageservice.DeleteImageRequest\x1a!.imageservice.DeleteImageResponse2\xef\x01\n" +
 	"\x0fLocationService\x12p\n" +
 	"\x15GetLocationFromCoords\x12*.imageservice.GetLocationFromCoordsRequest\x1a+.imageservice.GetLocationFromCoordsResponse\x12j\n" +
-	"\x13GetLocationFromName\x12(.imageservice.GetLocationFromNameRequest\x1a).imageservice.GetLocationFromNameResponseBAZ?https://github.com/NirvekPanda/Background-Image-Drive-API/protob\x06proto3"
+	"\x13GetLocationFromName\x12(.imageservice.GetLocationFromNameRequest\x1a).imageservice.GetLocationFromNameResponseB=Z;github.com/NirvekPanda/Background-Image-Drive-API/proto/genb\x06proto3"
 
 var (
 	file_imageservice_proto_rawDescOnce sync.Once

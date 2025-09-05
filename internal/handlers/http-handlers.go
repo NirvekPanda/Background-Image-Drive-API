@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	pb "github.com/NirvekPanda/Background-Image-Drive-API/proto/gen"
+	pb "github.com/NirvekPanda/Background-Image-Drive-API"
 	"google.golang.org/grpc"
 )
 
@@ -33,7 +33,6 @@ func (h *HTTPHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/images/current", h.getCurrentImage)
 	mux.HandleFunc("POST /api/v1/images/upload", h.uploadImage)
 	mux.HandleFunc("GET /api/v1/images/count", h.getImageCount)
-	mux.HandleFunc("GET /api/v1/images", h.getAllImages)
 	mux.HandleFunc("GET /api/v1/images/{id}", h.getImageById)
 	mux.HandleFunc("DELETE /api/v1/images/{id}", h.deleteImage)
 
