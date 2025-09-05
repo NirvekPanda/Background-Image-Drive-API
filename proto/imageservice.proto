@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package imageservice;
+
+option go_package = "https://github.com/NirvekPanda/Background-Image-Drive-API/proto";
+
+import "google/protobuf/timestamp.proto";
+
+// Location data structure
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+  string name = 3;
+  string country = 4;
+  string city = 5;
+  string address = 6;
+}
+
+// Image metadata structure
+message ImageMetadata {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  Location location = 4;
+  string drive_file_id = 5;
+}
+
+// Request messages
+message GetCurrentImageRequest {
+  // Empty for now, could add filters later
+}
+
+message UploadImageRequest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  Location location = 4;
+  bytes image_data = 5;
+}
+
+message GetImageCountRequest {
+  // Empty for now, could add filters later
+}
+
+message GetImageByIdRequest {
+  string image_id = 1;
+}
+
+message DeleteImageRequest {
+  string image_id = 1;
+}
+
+// Response messages
+message GetCurrentImageResponse {
+  bool success = 1;
+  string message = 2;
+  ImageMetadata metadata = 3;
+}
+
+message UploadImageResponse {
+  bool success = 1;
+  string message = 2;
+  ImageMetadata metadata = 3;
+}
+
+message GetImageCountResponse {
+  int32 count = 1;
+}
+
+message GetImageByIdResponse {
+  bool success = 1;
+  string message = 2;
+  ImageMetadata metadata = 3;
+}
+
+message DeleteImageResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Location service messages
+message GetLocationFromCoordsRequest {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message GetLocationFromNameRequest {
+  string location_name = 1;
+}
+
+message GetLocationFromCoordsResponse {
+  bool success = 1;
+  string message = 2;
+  Location location = 3;
+}
+
+message GetLocationFromNameResponse {
+  bool success = 1;
+  string message = 2;
+  Location location = 3;
+}
+
+// Main Image Service
+service ImageService {
+  // Get the current/latest image
+  rpc GetCurrentImage(GetCurrentImageRequest) returns (GetCurrentImageResponse);
+
+  // Upload a new image
+  rpc UploadImage(UploadImageRequest) returns (UploadImageResponse);
+
+  // Get total image count
+  rpc GetImageCount(GetImageCountRequest) returns (GetImageCountResponse);
+
+  // Get specific image by ID
+  rpc GetImageById(GetImageByIdRequest) returns (GetImageByIdResponse);
+
+  // Delete an image
+  rpc DeleteImage(DeleteImageRequest) returns (DeleteImageResponse);
+}
+
+// Location Service
+service LocationService {
+  // Get location data from coordinates
+  rpc GetLocationFromCoords(GetLocationFromCoordsRequest) returns (GetLocationFromCoordsResponse);
+
+  // Get location data from name
+  rpc GetLocationFromName(GetLocationFromNameRequest) returns (GetLocationFromNameResponse);
+}
