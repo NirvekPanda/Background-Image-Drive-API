@@ -18,18 +18,26 @@ HTTP_BINARY = bin/http-gateway
 
 # Default target
 .PHONY: all
-all: clean proto build
+all: clean deps proto build
 
 # Install dependencies
 .PHONY: deps
 deps:
+	@echo "Installing Go dependencies..."
+	$(GOGET) google.golang.org/grpc@latest
+	$(GOGET) google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	$(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	$(GOGET) google.golang.org/api/drive/v3@latest
+	$(GOGET) golang.org/x/oauth2/google@latest
+	$(GOGET) google.golang.org/api/option@latest
 	$(GOMOD) download
 	$(GOMOD) tidy
+	@echo "Dependencies installed successfully!"
 
 # Install protobuf compiler and Go plugins
 .PHONY: install-proto-deps
 install-proto-deps:
-	# Install protoc-gen-go and protoc-gen-go-grpc
+	@echo "Installing protobuf dependencies..."
 	$(GOGET) google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	$(GOGET) google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
@@ -115,6 +123,11 @@ clean:
 fmt:
 	$(GOCMD) fmt ./...
 
+# Lint code
+.PHONY: lint
+lint:
+	golangci-lint run
+
 # Initialize project (run once)
 .PHONY: init
 init: install-proto-deps deps proto
@@ -130,11 +143,15 @@ dev-setup: init
 	@echo "Setting up development environment..."
 	@echo "Please add your Google credentials to credentials.json"
 
+# Clean everything and rebuild
+.PHONY: rebuild
+rebuild: clean deps proto build
+
 # Help
 .PHONY: help
 help:
 	@echo "Available commands:"
-	@echo "  make all              - Clean, generate proto, and build everything"
+	@echo "  make all              - Clean, install deps, generate proto, and build everything"
 	@echo "  make init             - Initialize project structure (run once)"
 	@echo "  make deps             - Install Go dependencies"
 	@echo "  make proto            - Generate protobuf files"
@@ -147,5 +164,7 @@ help:
 	@echo "  make test             - Run tests"
 	@echo "  make test-coverage    - Run tests with coverage"
 	@echo "  make clean            - Clean build artifacts"
+	@echo "  make rebuild          - Clean everything and rebuild"
 	@echo "  make fmt              - Format code"
+	@echo "  make lint             - Lint code"
 	@echo "  make help             - Show this help"

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	pb "github.com/NirvekPanda/Background-Image-Drive-API"
+	pb "github.com/NirvekPanda/Background-Image-Drive-API/proto/gen"
 	"google.golang.org/grpc"
 )
 
@@ -72,7 +72,7 @@ func (h *HTTPHandler) uploadImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get file from form
-	file, header, err := r.FormFile("image")
+	file, _, err := r.FormFile("image")
 	if err != nil {
 		http.Error(w, "Image file is required", http.StatusBadRequest)
 		return
@@ -118,8 +118,6 @@ func (h *HTTPHandler) uploadImage(w http.ResponseWriter, r *http.Request) {
 		Description: description,
 		Location:    location,
 		ImageData:   imageData,
-		Filename:    header.Filename,
-		MimeType:    header.Header.Get("Content-Type"),
 	}
 
 	// Call gRPC service
@@ -268,7 +266,7 @@ func (h *HTTPHandler) getLocationFromName(w http.ResponseWriter, r *http.Request
 func (h *HTTPHandler) healthCheck(w http.ResponseWriter, r *http.Request) {
 	health := map[string]string{
 		"status":    "healthy",
-		"timestamp": time.Now().RFC3339(),
+		"timestamp": time.Now().Format(time.RFC3339Nano),
 		"service":   "image-api-http-gateway",
 	}
 
