@@ -2,8 +2,8 @@
 
 # Configuration
 PROJECT_ID="portfolio-420-69"
-SERVICE_NAME="portfolio-images-api"
-REGION="us-central1"
+SERVICE_NAME="background-image-drive-api"
+REGION="us-west1"
 IMAGE_NAME="gcr.io/$PROJECT_ID/$SERVICE_NAME"
 
 echo "🚀 Deploying Portfolio Images API to Cloud Run"
@@ -39,13 +39,7 @@ gcloud run deploy $SERVICE_NAME \
   --min-instances 0 \
   --timeout 300 \
   --concurrency 80 \
-  --set-env-vars "GOOGLE_DRIVE_FOLDER_ID=$GOOGLE_DRIVE_FOLDER_ID" \
-  --set-env-vars "GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY" \
-  --set-env-vars "CLOUD_SQL_CONNECTION_NAME=$CLOUD_SQL_CONNECTION_NAME" \
-  --set-env-vars "CLOUD_SQL_DATABASE=$CLOUD_SQL_DATABASE" \
-  --set-env-vars "CLOUD_SQL_USER=$CLOUD_SQL_USER" \
-  --set-env-vars "CLOUD_SQL_PASSWORD=$CLOUD_SQL_PASSWORD" \
-  --set-env-vars "GRPC_PORT=50051" \
+  --env-vars-file env-vars.yaml \
   --set-secrets "oauth_credentials.json=oauth-credentials:latest" \
   --set-secrets "token.json=oauth-token:latest"
 

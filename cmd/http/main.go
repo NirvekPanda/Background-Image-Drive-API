@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/NirvekPanda/Background-Image-Drive-API/internal/handlers"
+	"github.com/NirvekPanda/Background-Image-Drive-API/internal/middleware"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -39,6 +40,12 @@ func main() {
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)
 
+	// Setup CORS middleware
+	corsConfig := middleware.GetCORSConfig()
+
+	// Wrap the mux with CORS middleware
+	handlerWithCORS := middleware.CORS(corsConfig)(mux)
+
 	// Start HTTP server
 	port := os.Getenv("HTTP_PORT")
 	if port == "" {
@@ -47,6 +54,7 @@ func main() {
 
 	fmt.Printf("HTTP server starting on :%s\n", port)
 	fmt.Printf("Connected to gRPC server at: %s\n", grpcAddr)
+	fmt.Println("CORS enabled for origins:", corsConfig.AllowedOrigins)
 	fmt.Println("Available endpoints:")
 	fmt.Println("  GET  /api/v1/images/current")
 	fmt.Println("  POST /api/v1/images/upload")
@@ -58,5 +66,5 @@ func main() {
 	fmt.Println("  GET  /api/v1/location/name?name=San Francisco")
 	fmt.Println("  GET  /health")
 
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+	log.Fatal(http.ListenAndServe(":"+port, handlerWithCORS))
 }

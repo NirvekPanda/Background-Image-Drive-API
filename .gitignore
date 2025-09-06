@@ -80,5 +80,8 @@ secrets.yml
 
 # setup files
 setup_cloud_sql.sh
+
+# Documentation
+CORS.md
 SECURITY.md
 DEPLOYMENT.md
