@@ -78,7 +78,7 @@ func loadOrGetToken(ctx context.Context, config *oauth2.Config, tokenPath string
 				return &token, nil
 			}
 			if token, err := config.TokenSource(ctx, &token).Token(); err == nil {
-				saveToken(token, tokenPath)
+				_ = saveToken(token, tokenPath)
 				return token, nil
 			}
 		}

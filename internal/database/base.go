@@ -41,7 +41,9 @@ func (d *BaseDatabaseService) CreateImage(ctx context.Context, image interface{}
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %v", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback() // Ignore rollback error in defer
+	}()
 
 	// Insert image
 	query := `

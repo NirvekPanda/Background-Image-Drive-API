@@ -10,7 +10,7 @@ func TestCORS(t *testing.T) {
 	// Create a test handler
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK")) // Ignore write error in test
 	})
 
 	// Create CORS middleware with test config
