@@ -117,21 +117,12 @@ func main() {
 		log.Fatalf("Failed to create Drive utility: %v", err)
 	}
 
-	// Create database service
-	dbService, err := database.NewCloudSQLConnection(ctx, database.CloudSQLConfig{
-		InstanceConnectionName: cloudSQLConnName,
-		DatabaseName:           cloudSQLDatabase,
-		User:                   cloudSQLUser,
-		Password:               cloudSQLPassword,
-	})
+	// Create database service with fallback
+	dbService, err := database.NewDatabaseServiceWithFallback(ctx,
+		database.DatabaseTypeCloudSQL,
+		database.DatabaseTypeSQLite)
 	if err != nil {
-		log.Printf("Failed to connect to Cloud SQL, trying SQLite: %v", err)
-		// Fallback to SQLite for development
-		dbService, err = database.NewSQLiteDatabase(ctx)
-		if err != nil {
-			log.Fatalf("Failed to connect to SQLite database: %v", err)
-		}
-		log.Println("Using SQLite database for development")
+		log.Fatalf("Failed to connect to any database: %v", err)
 	}
 	defer dbService.Close()
 

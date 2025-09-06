@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/NirvekPanda/Background-Image-Drive-API/internal/database"
+	"github.com/NirvekPanda/Background-Image-Drive-API/internal/interfaces"
 	pb "github.com/NirvekPanda/Background-Image-Drive-API/proto/gen"
 )
 
@@ -13,11 +13,11 @@ import (
 type ImageService struct {
 	pb.UnimplementedImageServiceServer
 	driveUtil *DriveUtilOAuth
-	dbService *database.DatabaseService
+	dbService interfaces.DatabaseService
 }
 
 // NewImageService creates a new ImageService instance
-func NewImageService(driveUtil *DriveUtilOAuth, dbService *database.DatabaseService) *ImageService {
+func NewImageService(driveUtil *DriveUtilOAuth, dbService interfaces.DatabaseService) *ImageService {
 	return &ImageService{
 		driveUtil: driveUtil,
 		dbService: dbService,
@@ -26,11 +26,19 @@ func NewImageService(driveUtil *DriveUtilOAuth, dbService *database.DatabaseServ
 
 // GetCurrentImage returns the most recently created image
 func (s *ImageService) GetCurrentImage(ctx context.Context, req *pb.GetCurrentImageRequest) (*pb.GetCurrentImageResponse, error) {
-	image, err := s.dbService.GetCurrentImage(ctx)
+	imageInterface, err := s.dbService.GetCurrentImage(ctx)
 	if err != nil {
 		return &pb.GetCurrentImageResponse{
 			Success: false,
 			Message: "No images found",
+		}, nil
+	}
+
+	image, ok := imageInterface.(*pb.ImageMetadata)
+	if !ok {
+		return &pb.GetCurrentImageResponse{
+			Success: false,
+			Message: "Invalid image data type",
 		}, nil
 	}
 
@@ -105,12 +113,20 @@ func (s *ImageService) GetImageCount(ctx context.Context, req *pb.GetImageCountR
 
 // ListImages returns all images from the database
 func (s *ImageService) ListImages(ctx context.Context, req *pb.ListImagesRequest) (*pb.ListImagesResponse, error) {
-	images, err := s.dbService.ListImages(ctx)
+	imagesInterface, err := s.dbService.ListImages(ctx)
 	if err != nil {
 		return &pb.ListImagesResponse{
 			Success: false,
 			Message: fmt.Sprintf("Failed to list images: %v", err),
 		}, nil
+	}
+
+	// Convert []interface{} to []*pb.ImageMetadata
+	var images []*pb.ImageMetadata
+	for _, imgInterface := range imagesInterface {
+		if img, ok := imgInterface.(*pb.ImageMetadata); ok {
+			images = append(images, img)
+		}
 	}
 
 	return &pb.ListImagesResponse{
@@ -122,11 +138,19 @@ func (s *ImageService) ListImages(ctx context.Context, req *pb.ListImagesRequest
 
 // GetImageById retrieves a specific image by ID
 func (s *ImageService) GetImageById(ctx context.Context, req *pb.GetImageByIdRequest) (*pb.GetImageByIdResponse, error) {
-	image, err := s.dbService.GetImage(ctx, req.ImageId)
+	imageInterface, err := s.dbService.GetImage(ctx, req.ImageId)
 	if err != nil {
 		return &pb.GetImageByIdResponse{
 			Success: false,
 			Message: "Image not found",
+		}, nil
+	}
+
+	image, ok := imageInterface.(*pb.ImageMetadata)
+	if !ok {
+		return &pb.GetImageByIdResponse{
+			Success: false,
+			Message: "Invalid image data type",
 		}, nil
 	}
 
@@ -140,11 +164,19 @@ func (s *ImageService) GetImageById(ctx context.Context, req *pb.GetImageByIdReq
 // DeleteImage removes an image from both database and Google Drive
 func (s *ImageService) DeleteImage(ctx context.Context, req *pb.DeleteImageRequest) (*pb.DeleteImageResponse, error) {
 	// Get image metadata first to get the Drive file ID
-	image, err := s.dbService.GetImage(ctx, req.ImageId)
+	imageInterface, err := s.dbService.GetImage(ctx, req.ImageId)
 	if err != nil {
 		return &pb.DeleteImageResponse{
 			Success: false,
 			Message: "Image not found",
+		}, nil
+	}
+
+	image, ok := imageInterface.(*pb.ImageMetadata)
+	if !ok {
+		return &pb.DeleteImageResponse{
+			Success: false,
+			Message: "Invalid image data type",
 		}, nil
 	}
 

@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/NirvekPanda/Background-Image-Drive-API/internal/interfaces"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 // NewSQLiteDatabase creates a SQLite database service for local development
-func NewSQLiteDatabase(ctx context.Context) (*DatabaseService, error) {
+func NewSQLiteDatabase(ctx context.Context) (interfaces.DatabaseService, error) {
 	// Use in-memory database for development
 	dbPath := os.Getenv("SQLITE_DB_PATH")
 	if dbPath == "" {
@@ -36,7 +37,7 @@ func NewSQLiteDatabase(ctx context.Context) (*DatabaseService, error) {
 	db.SetMaxOpenConns(1) // SQLite doesn't support multiple connections well
 	db.SetMaxIdleConns(1)
 
-	return &DatabaseService{db: db}, nil
+	return NewBaseDatabaseService(db), nil
 }
 
 // createSQLiteTables creates the necessary tables for SQLite

@@ -2,8 +2,13 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
+	"time"
+
+	"github.com/NirvekPanda/Background-Image-Drive-API/internal/interfaces"
+	_ "github.com/lib/pq"
 )
 
 // CloudSQLConfig holds Cloud SQL connection configuration
@@ -15,7 +20,7 @@ type CloudSQLConfig struct {
 }
 
 // NewCloudSQLConnection creates a Cloud SQL connection using connection name
-func NewCloudSQLConnection(ctx context.Context, config CloudSQLConfig) (*DatabaseService, error) {
+func NewCloudSQLConnection(ctx context.Context, config CloudSQLConfig) (interfaces.DatabaseService, error) {
 	// Use Cloud SQL connection name for Cloud Run integration
 	// This works with Cloud Run's built-in Cloud SQL connectivity
 	connectionString := fmt.Sprintf(
@@ -26,11 +31,11 @@ func NewCloudSQLConnection(ctx context.Context, config CloudSQLConfig) (*Databas
 		config.DatabaseName,
 	)
 
-	return NewDatabaseService(connectionString)
+	return NewPostgreSQLDatabase(ctx, connectionString)
 }
 
 // NewCloudSQLFromEnv creates a Cloud SQL connection from environment variables
-func NewCloudSQLFromEnv(ctx context.Context) (*DatabaseService, error) {
+func NewCloudSQLFromEnv(ctx context.Context) (interfaces.DatabaseService, error) {
 	config := CloudSQLConfig{
 		InstanceConnectionName: os.Getenv("CLOUD_SQL_CONNECTION_NAME"),
 		DatabaseName:           os.Getenv("CLOUD_SQL_DATABASE"),
@@ -55,13 +60,36 @@ func NewCloudSQLFromEnv(ctx context.Context) (*DatabaseService, error) {
 	return NewCloudSQLConnection(ctx, config)
 }
 
+// NewPostgreSQLDatabase creates a PostgreSQL database connection
+func NewPostgreSQLDatabase(ctx context.Context, connectionString string) (interfaces.DatabaseService, error) {
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %v", err)
+	}
+
+	// Test the connection
+	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(pingCtx); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %v", err)
+	}
+
+	// Set connection pool settings
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
+	return NewBaseDatabaseService(db), nil
+}
+
 // NewLocalPostgres creates a local PostgreSQL connection for development
-func NewLocalPostgres(ctx context.Context) (*DatabaseService, error) {
+func NewLocalPostgres(ctx context.Context) (interfaces.DatabaseService, error) {
 	connectionString := os.Getenv("DATABASE_URL")
 	if connectionString == "" {
 		// Default local connection string
 		connectionString = "host=localhost port=5432 user=postgres password=postgres dbname=portfolio_images sslmode=disable"
 	}
 
-	return NewDatabaseService(connectionString)
+	return NewPostgreSQLDatabase(ctx, connectionString)
 }

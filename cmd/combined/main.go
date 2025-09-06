@@ -85,27 +85,27 @@ func main() {
 
 	// Handle OAuth2 credentials
 	var oauthConfigPath, tokenPath string
-	
+
 	if secretManager != nil {
 		// In production, get credentials from Secret Manager
 		oauthConfigData, err := secretManager.GetSecret("oauth-credentials")
 		if err != nil {
 			log.Fatalf("Failed to get OAuth credentials from Secret Manager: %v", err)
 		}
-		
+
 		tokenData, err := secretManager.GetSecret("oauth-token")
 		if err != nil {
 			log.Fatalf("Failed to get OAuth token from Secret Manager: %v", err)
 		}
-		
+
 		// Write credentials to files
 		oauthConfigPath = "/tmp/oauth_credentials.json"
 		tokenPath = "/tmp/token.json"
-		
+
 		if err := os.WriteFile(oauthConfigPath, []byte(oauthConfigData), 0600); err != nil {
 			log.Fatalf("Failed to write OAuth credentials file: %v", err)
 		}
-		
+
 		if err := os.WriteFile(tokenPath, []byte(tokenData), 0600); err != nil {
 			log.Fatalf("Failed to write OAuth token file: %v", err)
 		}

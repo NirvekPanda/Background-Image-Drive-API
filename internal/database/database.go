@@ -2,271 +2,87 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"time"
 
-	pb "github.com/NirvekPanda/Background-Image-Drive-API/proto/gen"
-	_ "github.com/lib/pq"
+	"github.com/NirvekPanda/Background-Image-Drive-API/internal/interfaces"
 )
 
-// DatabaseService handles database operations
-type DatabaseService struct {
-	db *sql.DB
+// LegacyDatabaseService is a compatibility wrapper for the old DatabaseService
+// This maintains backward compatibility while transitioning to the new interface-based system
+type LegacyDatabaseService struct {
+	service interfaces.DatabaseService
 }
 
-// NewDatabaseService creates a new database service
-func NewDatabaseService(connectionString string) (*DatabaseService, error) {
-	db, err := sql.Open("postgres", connectionString)
+// NewLegacyDatabaseService creates a legacy database service wrapper
+func NewLegacyDatabaseService(ctx context.Context) (*LegacyDatabaseService, error) {
+	service, err := NewDatabaseServiceFromEnv(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %v", err)
+		return nil, err
 	}
-
-	// Test the connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %v", err)
-	}
-
-	// Set connection pool settings
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
-
-	return &DatabaseService{db: db}, nil
+	return &LegacyDatabaseService{service: service}, nil
 }
 
 // Close closes the database connection
-func (d *DatabaseService) Close() error {
-	return d.db.Close()
+func (d *LegacyDatabaseService) Close() error {
+	return d.service.Close()
 }
 
 // GetDB returns the underlying database connection
-func (d *DatabaseService) GetDB() *sql.DB {
-	return d.db
+func (d *LegacyDatabaseService) GetDB() interface{} {
+	return d.service.GetDB()
 }
 
 // CreateImage creates a new image record in the database
-func (d *DatabaseService) CreateImage(ctx context.Context, image *pb.ImageMetadata) error {
-	tx, err := d.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %v", err)
-	}
-	defer tx.Rollback()
-
-	// Insert image
-	query := `
-		INSERT INTO images (id, title, description, drive_file_id)
-		VALUES ($1, $2, $3, $4)
-		ON CONFLICT (id) DO UPDATE SET
-			title = EXCLUDED.title,
-			description = EXCLUDED.description,
-			drive_file_id = EXCLUDED.drive_file_id,
-			updated_at = CURRENT_TIMESTAMP
-	`
-	_, err = tx.ExecContext(ctx, query, image.Id, image.Title, image.Description, image.DriveFileId)
-	if err != nil {
-		return fmt.Errorf("failed to insert image: %v", err)
-	}
-
-	// Insert location if provided
-	if image.Location != nil {
-		locationQuery := `
-			INSERT INTO locations (image_id, latitude, longitude, name, country, city, address)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
-			ON CONFLICT (image_id) DO UPDATE SET
-				latitude = EXCLUDED.latitude,
-				longitude = EXCLUDED.longitude,
-				name = EXCLUDED.name,
-				country = EXCLUDED.country,
-				city = EXCLUDED.city,
-				address = EXCLUDED.address
-		`
-		_, err = tx.ExecContext(ctx, locationQuery,
-			image.Id,
-			image.Location.Latitude,
-			image.Location.Longitude,
-			image.Location.Name,
-			image.Location.Country,
-			image.Location.City,
-			image.Location.Address,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to insert location: %v", err)
-		}
-	}
-
-	return tx.Commit()
+func (d *LegacyDatabaseService) CreateImage(ctx context.Context, image interface{}) error {
+	return d.service.CreateImage(ctx, image)
 }
 
 // GetImage retrieves an image by ID
-func (d *DatabaseService) GetImage(ctx context.Context, imageID string) (*pb.ImageMetadata, error) {
-	query := `
-		SELECT i.id, i.title, i.description, i.drive_file_id, i.created_at,
-		       l.latitude, l.longitude, l.name, l.country, l.city, l.address
-		FROM images i
-		LEFT JOIN locations l ON i.id = l.image_id
-		WHERE i.id = $1
-	`
-
-	var image pb.ImageMetadata
-	var location pb.Location
-	var createdAt time.Time
-
-	err := d.db.QueryRowContext(ctx, query, imageID).Scan(
-		&image.Id,
-		&image.Title,
-		&image.Description,
-		&image.DriveFileId,
-		&createdAt,
-		&location.Latitude,
-		&location.Longitude,
-		&location.Name,
-		&location.Country,
-		&location.City,
-		&location.Address,
-	)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("image not found")
-		}
-		return nil, fmt.Errorf("failed to get image: %v", err)
-	}
-
-	// Only set location if it has data
-	if location.Latitude != 0 || location.Longitude != 0 || location.Name != "" {
-		image.Location = &location
-	}
-
-	return &image, nil
+func (d *LegacyDatabaseService) GetImage(ctx context.Context, imageID string) (interface{}, error) {
+	return d.service.GetImage(ctx, imageID)
 }
 
 // ListImages retrieves all images
-func (d *DatabaseService) ListImages(ctx context.Context) ([]*pb.ImageMetadata, error) {
-	query := `
-		SELECT i.id, i.title, i.description, i.drive_file_id, i.created_at,
-		       l.latitude, l.longitude, l.name, l.country, l.city, l.address
-		FROM images i
-		LEFT JOIN locations l ON i.id = l.image_id
-		ORDER BY i.created_at DESC
-	`
-
-	rows, err := d.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list images: %v", err)
-	}
-	defer rows.Close()
-
-	var images []*pb.ImageMetadata
-	for rows.Next() {
-		var image pb.ImageMetadata
-		var location pb.Location
-		var createdAt time.Time
-
-		err := rows.Scan(
-			&image.Id,
-			&image.Title,
-			&image.Description,
-			&image.DriveFileId,
-			&createdAt,
-			&location.Latitude,
-			&location.Longitude,
-			&location.Name,
-			&location.Country,
-			&location.City,
-			&location.Address,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan image: %v", err)
-		}
-
-		// Only set location if it has data
-		if location.Latitude != 0 || location.Longitude != 0 || location.Name != "" {
-			image.Location = &location
-		}
-
-		images = append(images, &image)
-	}
-
-	return images, nil
+func (d *LegacyDatabaseService) ListImages(ctx context.Context) ([]interface{}, error) {
+	return d.service.ListImages(ctx)
 }
 
 // GetImageCount returns the total number of images
-func (d *DatabaseService) GetImageCount(ctx context.Context) (int32, error) {
-	query := "SELECT COUNT(*) FROM images"
-	var count int32
-
-	err := d.db.QueryRowContext(ctx, query).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get image count: %v", err)
-	}
-
-	return count, nil
+func (d *LegacyDatabaseService) GetImageCount(ctx context.Context) (int32, error) {
+	return d.service.GetImageCount(ctx)
 }
 
 // DeleteImage deletes an image and its location data
-func (d *DatabaseService) DeleteImage(ctx context.Context, imageID string) error {
-	query := "DELETE FROM images WHERE id = $1"
-	result, err := d.db.ExecContext(ctx, query, imageID)
-	if err != nil {
-		return fmt.Errorf("failed to delete image: %v", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %v", err)
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("image not found")
-	}
-
-	return nil
+func (d *LegacyDatabaseService) DeleteImage(ctx context.Context, imageID string) error {
+	return d.service.DeleteImage(ctx, imageID)
 }
 
 // GetCurrentImage returns the most recently created image
-func (d *DatabaseService) GetCurrentImage(ctx context.Context) (*pb.ImageMetadata, error) {
-	query := `
-		SELECT i.id, i.title, i.description, i.drive_file_id, i.created_at,
-		       l.latitude, l.longitude, l.name, l.country, l.city, l.address
-		FROM images i
-		LEFT JOIN locations l ON i.id = l.image_id
-		ORDER BY i.created_at DESC
-		LIMIT 1
-	`
+func (d *LegacyDatabaseService) GetCurrentImage(ctx context.Context) (interface{}, error) {
+	return d.service.GetCurrentImage(ctx)
+}
 
-	var image pb.ImageMetadata
-	var location pb.Location
-	var createdAt time.Time
+// CreateLocation creates a location record
+func (d *LegacyDatabaseService) CreateLocation(ctx context.Context, imageID string, location interface{}) error {
+	return d.service.CreateLocation(ctx, imageID, location)
+}
 
-	err := d.db.QueryRowContext(ctx, query).Scan(
-		&image.Id,
-		&image.Title,
-		&image.Description,
-		&image.DriveFileId,
-		&createdAt,
-		&location.Latitude,
-		&location.Longitude,
-		&location.Name,
-		&location.Country,
-		&location.City,
-		&location.Address,
-	)
+// GetLocation retrieves a location by image ID
+func (d *LegacyDatabaseService) GetLocation(ctx context.Context, imageID string) (interface{}, error) {
+	return d.service.GetLocation(ctx, imageID)
+}
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no images found")
-		}
-		return nil, fmt.Errorf("failed to get current image: %v", err)
-	}
+// UpdateLocation updates a location record
+func (d *LegacyDatabaseService) UpdateLocation(ctx context.Context, imageID string, location interface{}) error {
+	return d.service.UpdateLocation(ctx, imageID, location)
+}
 
-	// Only set location if it has data
-	if location.Latitude != 0 || location.Longitude != 0 || location.Name != "" {
-		image.Location = &location
-	}
+// DeleteLocation deletes a location record
+func (d *LegacyDatabaseService) DeleteLocation(ctx context.Context, imageID string) error {
+	return d.service.DeleteLocation(ctx, imageID)
+}
 
-	return &image, nil
+// NewDatabaseServiceLegacy creates a new database service (legacy function for backward compatibility)
+func NewDatabaseServiceLegacy(connectionString string) (*LegacyDatabaseService, error) {
+	return nil, fmt.Errorf("use NewLegacyDatabaseService or NewDatabaseServiceWithType instead")
 }
