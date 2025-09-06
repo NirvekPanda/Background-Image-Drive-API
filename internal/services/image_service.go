@@ -93,6 +93,7 @@ func (s *ImageService) UploadImage(ctx context.Context, req *pb.UploadImageReque
 	return &pb.UploadImageResponse{
 		Success:  true,
 		Message:  "Image uploaded successfully",
+		ImageId:  imageID,
 		Metadata: metadata,
 	}, nil
 }

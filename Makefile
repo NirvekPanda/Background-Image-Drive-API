@@ -13,8 +13,7 @@ GOGET = $(GOCMD) get
 GOMOD = $(GOCMD) mod
 
 # Binary names
-SERVER_BINARY = bin/grpc-server
-HTTP_BINARY = bin/http-gateway
+CLOUDRUN_BINARY = bin/cloudrun-service
 
 # Default target
 .PHONY: all
@@ -61,41 +60,27 @@ clean-proto:
 	@echo "Cleaning generated protobuf files..."
 	@rm -rf $(GENERATED_DIR)
 
-# Build all binaries
+# Build cloudrun service
 .PHONY: build
-build: build-server build-http
+build: build-cloudrun
 
-# Build gRPC server
-.PHONY: build-server
-build-server:
-	@echo "Building gRPC server..."
+# Build cloudrun service
+.PHONY: build-cloudrun
+build-cloudrun:
+	@echo "Building cloudrun service..."
 	@mkdir -p bin
-	$(GOBUILD) -o $(SERVER_BINARY) ./cmd/server
+	$(GOBUILD) -o $(CLOUDRUN_BINARY) ./cmd/cloudrun
 
-# Build HTTP gateway
-.PHONY: build-http
-build-http:
-	@echo "Building HTTP gateway..."
-	@mkdir -p bin
-	$(GOBUILD) -o $(HTTP_BINARY) ./cmd/http
+# Run cloudrun service
+.PHONY: run
+run: build-cloudrun
+	./$(CLOUDRUN_BINARY)
 
-# Run gRPC server
-.PHONY: run-server
-run-server: build-server
-	./$(SERVER_BINARY)
-
-# Run HTTP gateway
-.PHONY: run-http
-run-http: build-http
-	./$(HTTP_BINARY)
-
-# Run both services (in background)
-.PHONY: run-all
-run-all:
-	@echo "Starting gRPC server..."
-	./$(SERVER_BINARY) &
-	@echo "Starting HTTP gateway..."
-	./$(HTTP_BINARY) &
+# Run cloudrun service in background
+.PHONY: run-bg
+run-bg: build-cloudrun
+	@echo "Starting cloudrun service in background..."
+	./$(CLOUDRUN_BINARY) &
 
 # Test
 .PHONY: test
@@ -113,8 +98,7 @@ test-coverage:
 clean:
 	@echo "Cleaning..."
 	$(GOCLEAN)
-	@rm -f $(SERVER_BINARY)
-	@rm -f $(HTTP_BINARY)
+	@rm -f $(CLOUDRUN_BINARY)
 	@rm -rf bin/
 	@rm -f coverage.out coverage.html
 
@@ -132,7 +116,7 @@ lint:
 .PHONY: init
 init: install-proto-deps deps proto
 	@echo "Creating directory structure..."
-	@mkdir -p cmd/server cmd/http
+	@mkdir -p cmd/cloudrun
 	@mkdir -p internal/handlers internal/services
 	@mkdir -p bin
 	@echo "Project initialized successfully!"
@@ -155,12 +139,10 @@ help:
 	@echo "  make init             - Initialize project structure (run once)"
 	@echo "  make deps             - Install Go dependencies"
 	@echo "  make proto            - Generate protobuf files"
-	@echo "  make build            - Build all binaries"
-	@echo "  make build-server     - Build gRPC server only"
-	@echo "  make build-http       - Build HTTP gateway only"
-	@echo "  make run-server       - Run gRPC server"
-	@echo "  make run-http         - Run HTTP gateway"
-	@echo "  make run-all          - Run both services"
+	@echo "  make build            - Build cloudrun service"
+	@echo "  make build-cloudrun   - Build cloudrun service only"
+	@echo "  make run              - Run cloudrun service"
+	@echo "  make run-bg           - Run cloudrun service in background"
 	@echo "  make test             - Run tests"
 	@echo "  make test-coverage    - Run tests with coverage"
 	@echo "  make clean            - Clean build artifacts"

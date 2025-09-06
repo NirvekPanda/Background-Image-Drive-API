@@ -98,12 +98,12 @@ make proto
 
 1. Start the gRPC server:
 ```bash
-go run cmd/server/main.go
+go run cmd/legacy/server/main.go
 ```
 
 2. Start the HTTP gateway (in another terminal):
 ```bash
-go run cmd/http/main.go
+go run cmd/legacy/http/main.go
 ```
 
 ### Environment Variables
@@ -159,8 +159,22 @@ make build
 
 ### Testing
 ```bash
+# Run unit tests
 make test
+
+# Run simple API tests
+./testing/run-all-tests.sh
+
+# Test individual components
+./testing/test-health.sh
+./testing/test-images.sh
+./testing/test-location.sh
+
+# Test upload endpoint
+./testing/test_upload.sh
 ```
+
+For detailed testing information, see the [testing/README.md](testing/README.md) file.
 
 ## Future Enhancements
 

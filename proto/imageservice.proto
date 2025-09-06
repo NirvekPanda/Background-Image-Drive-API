@@ -64,7 +64,8 @@ message GetCurrentImageResponse {
 message UploadImageResponse {
   bool success = 1;
   string message = 2;
-  ImageMetadata metadata = 3;
+  string image_id = 3;
+  ImageMetadata metadata = 4;
 }
 
 message GetImageCountResponse {

@@ -1,0 +1,50 @@
+name: 🧪 API Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  api-tests:
+    name: 🧪 Run API Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🏥 Health Check Test
+      run: |
+        echo "Testing API health..."
+        chmod +x testing/test-health.sh
+        ./testing/test-health.sh
+        
+    - name: 📸 Images Test
+      run: |
+        echo "Testing image upload and retrieval..."
+        chmod +x testing/test-images.sh
+        ./testing/test-images.sh
+        
+    - name: 📍 Location Test
+      run: |
+        echo "Testing location services..."
+        chmod +x testing/test-location.sh
+        ./testing/test-location.sh
+        
+    - name: 🎯 Complete Test Suite
+      run: |
+        echo "Running complete test suite..."
+        chmod +x testing/run-all-tests.sh
+        ./testing/run-all-tests.sh
+        
+    - name: 📊 Test Summary
+      run: |
+        echo "✅ All API tests completed successfully!"
+        echo "🏥 Health check: PASSED"
+        echo "📸 Images test: PASSED" 
+        echo "📍 Location test: PASSED"
+        echo ""
+        echo "API is fully functional and ready for production use."

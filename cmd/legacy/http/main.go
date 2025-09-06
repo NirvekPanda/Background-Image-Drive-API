@@ -48,7 +48,7 @@ func main() {
 
 	if err != nil {
 		log.Fatalf("Failed to connect to gRPC server after 10 attempts: %v\n"+
-			"Make sure the gRPC server is running by executing: go run cmd/server/main.go", err)
+			"Make sure the gRPC server is running by executing: go run cmd/legacy/server/main.go", err)
 	}
 	defer conn.Close()
 

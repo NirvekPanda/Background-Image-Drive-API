@@ -522,7 +522,8 @@ type UploadImageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Metadata      *ImageMetadata         `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	ImageId       string                 `protobuf:"bytes,3,opt,name=image_id,json=imageId,proto3" json:"image_id,omitempty"`
+	Metadata      *ImageMetadata         `protobuf:"bytes,4,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -567,6 +568,13 @@ func (x *UploadImageResponse) GetSuccess() bool {
 func (x *UploadImageResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
+	}
+	return ""
+}
+
+func (x *UploadImageResponse) GetImageId() string {
+	if x != nil {
+		return x.ImageId
 	}
 	return ""
 }
@@ -1046,11 +1054,12 @@ const file_imageservice_proto_rawDesc = "" +
 	"\x17GetCurrentImageResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x127\n" +
-	"\bmetadata\x18\x03 \x01(\v2\x1b.imageservice.ImageMetadataR\bmetadata\"\x82\x01\n" +
+	"\bmetadata\x18\x03 \x01(\v2\x1b.imageservice.ImageMetadataR\bmetadata\"\x9d\x01\n" +
 	"\x13UploadImageResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x127\n" +
-	"\bmetadata\x18\x03 \x01(\v2\x1b.imageservice.ImageMetadataR\bmetadata\"-\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x19\n" +
+	"\bimage_id\x18\x03 \x01(\tR\aimageId\x127\n" +
+	"\bmetadata\x18\x04 \x01(\v2\x1b.imageservice.ImageMetadataR\bmetadata\"-\n" +
 	"\x15GetImageCountResponse\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\x05R\x05count\"}\n" +
 	"\x12ListImagesResponse\x12\x18\n" +
