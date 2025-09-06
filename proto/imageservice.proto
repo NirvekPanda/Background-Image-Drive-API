@@ -42,6 +42,10 @@ message GetImageCountRequest {
   // Empty for now, could add filters later
 }
 
+message ListImagesRequest {
+  // Empty for now, could add filters later
+}
+
 message GetImageByIdRequest {
   string image_id = 1;
 }
@@ -65,6 +69,12 @@ message UploadImageResponse {
 
 message GetImageCountResponse {
   int32 count = 1;
+}
+
+message ListImagesResponse {
+  bool success = 1;
+  string message = 2;
+  repeated ImageMetadata images = 3;
 }
 
 message GetImageByIdResponse {
@@ -110,6 +120,9 @@ service ImageService {
 
   // Get total image count
   rpc GetImageCount(GetImageCountRequest) returns (GetImageCountResponse);
+
+  // List all images
+  rpc ListImages(ListImagesRequest) returns (ListImagesResponse);
 
   // Get specific image by ID
   rpc GetImageById(GetImageByIdRequest) returns (GetImageByIdResponse);

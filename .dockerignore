@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test files
+*_test.go
+test_*
+
+# Build artifacts
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment files (will be set via Cloud Run)
+.env
+
+# Credentials (will be mounted as secrets)
+credentials.json
+oauth_credentials.json
+token.json
+
+# Test images
+*.jpg
+*.png
+*.gif
+*.jpeg

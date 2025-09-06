@@ -22,6 +22,7 @@ const (
 	ImageService_GetCurrentImage_FullMethodName = "/imageservice.ImageService/GetCurrentImage"
 	ImageService_UploadImage_FullMethodName     = "/imageservice.ImageService/UploadImage"
 	ImageService_GetImageCount_FullMethodName   = "/imageservice.ImageService/GetImageCount"
+	ImageService_ListImages_FullMethodName      = "/imageservice.ImageService/ListImages"
 	ImageService_GetImageById_FullMethodName    = "/imageservice.ImageService/GetImageById"
 	ImageService_DeleteImage_FullMethodName     = "/imageservice.ImageService/DeleteImage"
 )
@@ -38,6 +39,8 @@ type ImageServiceClient interface {
 	UploadImage(ctx context.Context, in *UploadImageRequest, opts ...grpc.CallOption) (*UploadImageResponse, error)
 	// Get total image count
 	GetImageCount(ctx context.Context, in *GetImageCountRequest, opts ...grpc.CallOption) (*GetImageCountResponse, error)
+	// List all images
+	ListImages(ctx context.Context, in *ListImagesRequest, opts ...grpc.CallOption) (*ListImagesResponse, error)
 	// Get specific image by ID
 	GetImageById(ctx context.Context, in *GetImageByIdRequest, opts ...grpc.CallOption) (*GetImageByIdResponse, error)
 	// Delete an image
@@ -82,6 +85,16 @@ func (c *imageServiceClient) GetImageCount(ctx context.Context, in *GetImageCoun
 	return out, nil
 }
 
+func (c *imageServiceClient) ListImages(ctx context.Context, in *ListImagesRequest, opts ...grpc.CallOption) (*ListImagesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListImagesResponse)
+	err := c.cc.Invoke(ctx, ImageService_ListImages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *imageServiceClient) GetImageById(ctx context.Context, in *GetImageByIdRequest, opts ...grpc.CallOption) (*GetImageByIdResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetImageByIdResponse)
@@ -114,6 +127,8 @@ type ImageServiceServer interface {
 	UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error)
 	// Get total image count
 	GetImageCount(context.Context, *GetImageCountRequest) (*GetImageCountResponse, error)
+	// List all images
+	ListImages(context.Context, *ListImagesRequest) (*ListImagesResponse, error)
 	// Get specific image by ID
 	GetImageById(context.Context, *GetImageByIdRequest) (*GetImageByIdResponse, error)
 	// Delete an image
@@ -136,6 +151,9 @@ func (UnimplementedImageServiceServer) UploadImage(context.Context, *UploadImage
 }
 func (UnimplementedImageServiceServer) GetImageCount(context.Context, *GetImageCountRequest) (*GetImageCountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetImageCount not implemented")
+}
+func (UnimplementedImageServiceServer) ListImages(context.Context, *ListImagesRequest) (*ListImagesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListImages not implemented")
 }
 func (UnimplementedImageServiceServer) GetImageById(context.Context, *GetImageByIdRequest) (*GetImageByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetImageById not implemented")
@@ -218,6 +236,24 @@ func _ImageService_GetImageCount_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ImageService_ListImages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListImagesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImageServiceServer).ListImages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ImageService_ListImages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImageServiceServer).ListImages(ctx, req.(*ListImagesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ImageService_GetImageById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetImageByIdRequest)
 	if err := dec(in); err != nil {
@@ -272,6 +308,10 @@ var ImageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetImageCount",
 			Handler:    _ImageService_GetImageCount_Handler,
+		},
+		{
+			MethodName: "ListImages",
+			Handler:    _ImageService_ListImages_Handler,
 		},
 		{
 			MethodName: "GetImageById",

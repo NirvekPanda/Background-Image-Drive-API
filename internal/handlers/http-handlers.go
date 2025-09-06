@@ -33,6 +33,7 @@ func (h *HTTPHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/images/current", h.getCurrentImage)
 	mux.HandleFunc("POST /api/v1/images/upload", h.uploadImage)
 	mux.HandleFunc("GET /api/v1/images/count", h.getImageCount)
+	mux.HandleFunc("GET /api/v1/images", h.listImages)
 	mux.HandleFunc("GET /api/v1/images/{id}", h.getImageById)
 	mux.HandleFunc("DELETE /api/v1/images/{id}", h.deleteImage)
 
@@ -140,6 +141,21 @@ func (h *HTTPHandler) getImageCount(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.imageClient.GetImageCount(ctx, &pb.GetImageCountRequest{})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get image count: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// GET /api/v1/images
+func (h *HTTPHandler) listImages(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	resp, err := h.imageClient.ListImages(ctx, &pb.ListImagesRequest{})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to list images: %v", err), http.StatusInternalServerError)
 		return
 	}
 
