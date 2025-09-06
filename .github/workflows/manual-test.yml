@@ -4,54 +4,54 @@ on:
   workflow_dispatch:
     inputs:
       test_type:
-        description: 'Type of test to run'
+        description: "Type of test to run"
         required: true
-        default: 'all'
+        default: "all"
         type: choice
         options:
-        - all
-        - health
-        - images
-        - location
+          - all
+          - health
+          - images
+          - location
 
 jobs:
   manual-test:
     name: 🧪 Manual API Test
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 🏥 Health Check Test
-      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'health' }}
-      run: |
-        echo "Testing API health..."
-        chmod +x testing/test-health.sh
-        ./testing/test-health.sh
-        
-    - name: 📸 Images Test
-      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'images' }}
-      run: |
-        echo "Testing image upload and retrieval..."
-        chmod +x testing/test-images.sh
-        ./testing/test-images.sh
-        
-    - name: 📍 Location Test
-      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'location' }}
-      run: |
-        echo "Testing location services..."
-        chmod +x testing/test-location.sh
-        ./testing/test-location.sh
-        
-    - name: 🎯 Complete Test Suite
-      if: ${{ inputs.test_type == 'all' }}
-      run: |
-        echo "Running complete test suite..."
-        chmod +x testing/run-all-tests.sh
-        ./testing/run-all-tests.sh
-        
-    - name: 📊 Test Summary
-      run: |
-        echo "✅ API tests completed successfully!"
-        echo "Test type: ${{ inputs.test_type }}"
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏥 Health Check Test
+        if: ${{ inputs.test_type == 'all' || inputs.test_type == 'health' }}
+        run: |
+          echo "Testing API health..."
+          chmod +x testing/test-health.sh
+          ./testing/test-health.sh
+
+      - name: 📸 Images Test
+        if: ${{ inputs.test_type == 'all' || inputs.test_type == 'images' }}
+        run: |
+          echo "Testing image upload and retrieval..."
+          chmod +x testing/test-images.sh
+          ./testing/test-images.sh
+
+      - name: 📍 Location Test
+        if: ${{ inputs.test_type == 'all' || inputs.test_type == 'location' }}
+        run: |
+          echo "Testing location services..."
+          chmod +x testing/test-location.sh
+          ./testing/test-location.sh
+
+      - name: 🎯 Complete Test Suite
+        if: ${{ inputs.test_type == 'all' }}
+        run: |
+          echo "Running complete test suite..."
+          chmod +x testing/run-all-tests.sh
+          ./testing/run-all-tests.sh
+
+      - name: 📊 Test Summary
+        run: |
+          echo "✅ API tests completed successfully!"
+          echo "Test type: ${{ inputs.test_type }}"
