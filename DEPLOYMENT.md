@@ -1,227 +1,128 @@
-# 🚀 Portfolio Images API - Cloud Run Deployment
+# Deployment Guide
 
-## 📋 Prerequisites
+## Environment Variables Setup
 
-1. **Google Cloud CLI** installed and authenticated
-2. **Docker** installed locally
-3. **Environment variables** configured in `.env` file
-4. **OAuth2 credentials** for Google Drive access
-
-## 🔧 Environment Variables
-
-Make sure your `.env` file contains:
-
+### 1. Create Environment File
+Copy the template and fill in your values:
 ```bash
-# Google Drive Configuration
-GOOGLE_DRIVE_FOLDER_ID=your-folder-id-here
-
-# Google Maps API
-GOOGLE_MAPS_API_KEY=your-maps-api-key
-
-# Cloud SQL Configuration
-CLOUD_SQL_CONNECTION_NAME=your-cloud-sql-ip
-CLOUD_SQL_DATABASE=portfolio_images
-CLOUD_SQL_USER=portfolio_user
-CLOUD_SQL_PASSWORD=your-password
-
-# OAuth2 Credentials (create these files)
-# oauth_credentials.json - Download from Google Cloud Console
-# token.json - Generated after first OAuth2 authentication
+cp env-vars.yaml.template env-vars.yaml
 ```
 
-## 🐳 Local Docker Testing
+### 2. Required Environment Variables
 
-### 1. Test Docker Container Locally
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed origins | `"https://yourdomain.com,http://localhost:3000"` |
+| `ENVIRONMENT` | Environment name | `"production"` |
+| `GOOGLE_DRIVE_FOLDER_ID` | Google Drive folder ID for storing images | `"1GFVR5bXu5JOtVwNnpY8JrnnPRE7XKzYQ"` |
+| `GOOGLE_MAPS_API_KEY` | Google Maps API key | `"AIzaSyBYTQ-2qwwVZabGQpMF2fZNtc9SmtbCbgs"` |
+| `CLOUD_SQL_CONNECTION_NAME` | Cloud SQL connection name | `"project-id:region:instance-name"` |
+| `CLOUD_SQL_DATABASE` | Database name | `"portfolio_images"` |
+| `CLOUD_SQL_USER` | Database username | `"portfolio_user"` |
+| `CLOUD_SQL_PASSWORD` | Database password | `"your-secure-password"` |
+| `GRPC_PORT` | Internal gRPC port | `"50051"` |
 
+### 3. Google Cloud Credentials
+
+Place your OAuth credentials in the appropriate location:
+- **Local development**: `oauth_credentials.json` and `token.json` in project root
+- **Production**: Mount as secrets in `/app/secrets/`
+
+## Local Development
+
+1. **Set up environment variables:**
+   ```bash
+   cp env-vars.yaml.template env-vars.yaml
+   # Edit env-vars.yaml with your values
+   ```
+
+2. **Add Google OAuth credentials:**
+   - Download `oauth_credentials.json` from Google Cloud Console
+   - Place in project root
+   - Run the app once to generate `token.json`
+
+3. **Run the service:**
+   ```bash
+   go run cmd/combined/main.go
+   ```
+
+## Google Cloud Run Deployment
+
+### 1. Create Secrets in Google Cloud Secret Manager
 ```bash
-# Load environment variables
-source .env
+# Set your project ID
+export PROJECT_ID=your-project-id
 
-# Run local Docker test
-./test-docker.sh
+# Create all secrets
+gcloud secrets create CORS_ALLOWED_ORIGINS --data-file=- <<< "https://yourdomain.com,http://localhost:3000"
+gcloud secrets create ENVIRONMENT --data-file=- <<< "production"
+gcloud secrets create GOOGLE_DRIVE_FOLDER_ID --data-file=- <<< "your-folder-id"
+gcloud secrets create GOOGLE_MAPS_API_KEY --data-file=- <<< "your-maps-key"
+gcloud secrets create CLOUD_SQL_CONNECTION_NAME --data-file=- <<< "project-id:region:instance-name"
+gcloud secrets create CLOUD_SQL_DATABASE --data-file=- <<< "portfolio_images"
+gcloud secrets create CLOUD_SQL_USER --data-file=- <<< "portfolio_user"
+gcloud secrets create CLOUD_SQL_PASSWORD --data-file=- <<< "your-db-password"
+gcloud secrets create GRPC_PORT --data-file=- <<< "50051"
 ```
 
-### 2. Manual Docker Testing
-
+### 2. Build and Push Docker Image
 ```bash
-# Build image
-docker build -t portfolio-images-api .
+# Build the image
+docker build -t gcr.io/$PROJECT_ID/portfolio-images .
 
-# Run container
-docker run -d \
-  --name portfolio-images-test \
-  -p 8080:8080 \
-  -p 50051:50051 \
-  -e GOOGLE_DRIVE_FOLDER_ID="$GOOGLE_DRIVE_FOLDER_ID" \
-  -e GOOGLE_MAPS_API_KEY="$GOOGLE_MAPS_API_KEY" \
-  -e CLOUD_SQL_CONNECTION_NAME="$CLOUD_SQL_CONNECTION_NAME" \
-  -e CLOUD_SQL_DATABASE="$CLOUD_SQL_DATABASE" \
-  -e CLOUD_SQL_USER="$CLOUD_SQL_USER" \
-  -e CLOUD_SQL_PASSWORD="$CLOUD_SQL_PASSWORD" \
-  portfolio-images-api
-
-# Test API
-curl http://localhost:8080/health
+# Push to Google Container Registry
+docker push gcr.io/$PROJECT_ID/portfolio-images
 ```
 
-## ☁️ Cloud Run Deployment
-
-### 1. Deploy to Cloud Run
-
+### 3. Deploy to Cloud Run
 ```bash
-# Load environment variables
-source .env
-
-# Deploy to Cloud Run
-./deploy.sh
-```
-
-### 2. Manual Cloud Run Deployment
-
-```bash
-# Set project
-gcloud config set project portfolio-420-69
-
-# Build and push image
-docker build -t gcr.io/portfolio-420-69/portfolio-images-api .
-docker push gcr.io/portfolio-420-69/portfolio-images-api
-
-# Deploy to Cloud Run
-gcloud run deploy portfolio-images-api \
-  --image gcr.io/portfolio-420-69/portfolio-images-api \
+gcloud run deploy portfolio-images \
+  --image gcr.io/$PROJECT_ID/portfolio-images \
   --platform managed \
-  --region us-central1 \
+  --region us-west1 \
   --allow-unauthenticated \
-  --port 8080 \
-  --memory 1Gi \
-  --cpu 1 \
-  --max-instances 10 \
-  --min-instances 0 \
-  --timeout 300 \
-  --concurrency 80 \
-  --set-env-vars "GOOGLE_DRIVE_FOLDER_ID=$GOOGLE_DRIVE_FOLDER_ID" \
-  --set-env-vars "GOOGLE_MAPS_API_KEY=$GOOGLE_MAPS_API_KEY" \
-  --set-env-vars "CLOUD_SQL_CONNECTION_NAME=$CLOUD_SQL_CONNECTION_NAME" \
-  --set-env-vars "CLOUD_SQL_DATABASE=$CLOUD_SQL_DATABASE" \
-  --set-env-vars "CLOUD_SQL_USER=$CLOUD_SQL_USER" \
-  --set-env-vars "CLOUD_SQL_PASSWORD=$CLOUD_SQL_PASSWORD"
+  --add-cloudsql-instances=project-id:region:instance-name \
+  --service-account=your-service-account@project-id.iam.gserviceaccount.com
 ```
 
-## 🔐 OAuth2 Setup for Cloud Run
-
-### 1. Create OAuth2 Credentials
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Navigate to: APIs & Services → Credentials
-3. Create OAuth 2.0 Client ID
-4. Application type: Web application
-5. Authorized redirect URIs: `http://localhost:8080/oauth/callback`
-6. Download JSON and save as `oauth_credentials.json`
-
-### 2. Generate Initial Token
-
+### 4. Grant Secret Manager Access
 ```bash
-# Run locally to generate token
-go run cmd/server/main.go
-
-# Follow OAuth2 flow to generate token.json
-# Copy token.json to your project root
+# Grant the service account access to Secret Manager
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:your-service-account@project-id.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
 ```
 
-### 3. Secure Credential Storage
-
-**⚠️ IMPORTANT: Never commit OAuth2 credentials to version control!**
-
-The following files are automatically ignored by `.gitignore`:
-- `oauth_credentials.json` - OAuth2 client credentials
-- `token.json` - OAuth2 access token
-- `.env` - Environment variables
-
-For production deployment, credentials are stored securely in Google Cloud Secret Manager.
-
-## 📊 Monitoring and Logs
-
-### View Logs
-
+### 5. Set up Cloud SQL Connection
+Make sure your Cloud Run service has access to Cloud SQL:
 ```bash
-# Cloud Run logs
-gcloud logs read --service=portfolio-images-api --limit=50
-
-# Real-time logs
-gcloud logs tail --service=portfolio-images-api
+gcloud run services add-iam-policy-binding portfolio-images \
+  --member="serviceAccount:your-service-account@project-id.iam.gserviceaccount.com" \
+  --role="roles/cloudsql.client"
 ```
 
-### Monitor Performance
+## Security Notes
 
-```bash
-# Service details
-gcloud run services describe portfolio-images-api --region=us-central1
+- **Never commit** `env-vars.yaml` to version control
+- **Never include** API keys or passwords in Docker images
+- Use Google Cloud Secret Manager for production secrets
+- Rotate API keys and passwords regularly
+- Enable Cloud SQL private IP when possible
 
-# Service URL
-gcloud run services describe portfolio-images-api --region=us-central1 --format='value(status.url)'
-```
-
-## 🧪 Testing Deployed API
-
-```bash
-# Get service URL
-SERVICE_URL=$(gcloud run services describe portfolio-images-api --region=us-central1 --format='value(status.url)')
-
-# Test health
-curl $SERVICE_URL/health
-
-# Test image count
-curl $SERVICE_URL/api/v1/images/count
-
-# Test image upload
-curl -X POST $SERVICE_URL/api/v1/images/upload \
-  -F "title=Test Upload" \
-  -F "description=Testing Cloud Run" \
-  -F "image=@amsterdam.jpg"
-```
-
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-1. **OAuth2 Token Expired**
-   - Regenerate token locally
-   - Update Cloud Run with new token
-
-2. **Database Connection Failed**
+1. **Cloud SQL Connection Failed**
+   - Verify connection name format: `project-id:region:instance-name`
    - Check Cloud SQL instance is running
-   - Verify IP address and credentials
+   - Ensure Cloud Run has Cloud SQL access
 
-3. **Google Drive Upload Failed**
-   - Verify OAuth2 credentials
-   - Check folder permissions
+2. **Google Drive API Errors**
+   - Verify OAuth credentials are correct
+   - Check Google Drive folder ID exists
+   - Ensure proper API permissions
 
-### Debug Commands
-
-```bash
-# Check container logs
-docker logs portfolio-images-test
-
-# Check Cloud Run logs
-gcloud logs read --service=portfolio-images-api --limit=100
-
-# Test database connection
-gcloud sql connect portfolio-images-db --user=portfolio_user --database=portfolio_images
-```
-
-## 📈 Scaling
-
-### Auto-scaling Configuration
-
-- **Min instances**: 0 (cost-effective)
-- **Max instances**: 10 (handle traffic spikes)
-- **Memory**: 1Gi (sufficient for image processing)
-- **CPU**: 1 (efficient for API operations)
-- **Concurrency**: 80 (optimal for Cloud Run)
-
-### Cost Optimization
-
-- Use min instances = 0 for development
-- Set max instances based on expected traffic
-- Monitor usage with Cloud Monitoring
-- Use Cloud SQL free tier (db-f1-micro)
+3. **CORS Errors**
+   - Add your frontend domain to `CORS_ALLOWED_ORIGINS`
+   - Check environment variable is set correctly

@@ -56,12 +56,13 @@ func main() {
 	// Create database service
 	dbService, err := database.NewCloudSQLFromEnv(ctx)
 	if err != nil {
-		log.Printf("Failed to connect to Cloud SQL, trying local database: %v", err)
-		// Fallback to local database for development
-		dbService, err = database.NewLocalPostgres(ctx)
+		log.Printf("Failed to connect to Cloud SQL, trying SQLite: %v", err)
+		// Fallback to SQLite for development
+		dbService, err = database.NewSQLiteDatabase(ctx)
 		if err != nil {
-			log.Fatalf("Failed to connect to database: %v", err)
+			log.Fatalf("Failed to connect to SQLite database: %v", err)
 		}
+		log.Println("Using SQLite database for development")
 	}
 	defer dbService.Close()
 

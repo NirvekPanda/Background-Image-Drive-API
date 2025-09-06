@@ -1,49 +1,41 @@
-# Git
-.git
-.gitignore
-
-# Documentation
-README.md
-*.md
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Test files
-*_test.go
-test_*
-
-# Build artifacts
-bin/
-*.exe
-*.dll
-*.so
-*.dylib
-
-# Temporary files
-*.tmp
-*.temp
-
-# Environment files (will be set via Cloud Run)
+# Environment files with secrets
+env-vars.yaml
 .env
+.env.local
+.env.production
 
-# Credentials (will be mounted as secrets)
+# Google Cloud credentials
 credentials.json
+service-account-key.json
 oauth_credentials.json
 token.json
 
-# Test images
-*.jpg
-*.png
-*.gif
-*.jpeg
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md

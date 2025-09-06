@@ -14,13 +14,13 @@ type CloudSQLConfig struct {
 	Password               string
 }
 
-// NewCloudSQLConnection creates a Cloud SQL connection using direct connection
+// NewCloudSQLConnection creates a Cloud SQL connection using connection name
 func NewCloudSQLConnection(ctx context.Context, config CloudSQLConfig) (*DatabaseService, error) {
-	// Use public IP for direct connection to Cloud SQL
-	// In production, you should use Cloud SQL Auth Proxy or private IP
+	// Use Cloud SQL connection name for Cloud Run integration
+	// This works with Cloud Run's built-in Cloud SQL connectivity
 	connectionString := fmt.Sprintf(
-		"host=%s port=5432 user=%s password=%s dbname=%s sslmode=require",
-		config.InstanceConnectionName, // This will be the IP address
+		"host=/cloudsql/%s port=5432 user=%s password=%s dbname=%s sslmode=require",
+		config.InstanceConnectionName, // This will be the connection name
 		config.User,
 		config.Password,
 		config.DatabaseName,
